@@ -670,8 +670,12 @@ class AccountManagement implements AccountManagementInterface
         $customerSecure->setRpTokenCreatedAt(null);
         $customerSecure->setPasswordHash($this->createPasswordHash($newPassword));
         $this->getAuthentication()->unlock($customer->getId());
-        $this->sessionManager->destroy();
-        $this->destroyCustomerSessions($customer->getId());
+        try {
+            $this->sessionManager->destroy();
+            $this->destroyCustomerSessions($customer->getId());
+        } catch (\Exception $e) {
+            $this->logger->error('\Magento\Customer\Model\AccountManagement::resetPassword: An exception was thrown when destroying a customer session but ignored. This is a temporary fix to a core bug. Please refer to the following. https://github.com/magento/magento2/issues/18256');
+        }
         $this->customerRepository->save($customer);
 
         return true;
